@@ -29,10 +29,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // ==========================================
                         // PUBLIC ENDPOINTS
-                        // ==========================================
-
                         // Actuator endpoints
                         .requestMatchers("/actuator/**")
                         .permitAll()
@@ -44,30 +41,19 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
-
-                        // ==========================================
-                        // ADMIN
-                        // ==========================================
-
+                        //ADMIN
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-
-                        // ==========================================
-                        // CONTENT CREATOR
-                        // ==========================================
-
+                        //CONTENT CREATOR
                         .requestMatchers("/api/content/**")
                         .hasAnyRole(
                                 "ADMIN",
                                 "CONTENT_CREATOR"
                         )
 
-
-                        // ==========================================
                         // STUDENT
-                        // ==========================================
-
+                
                         .requestMatchers("/api/student/**")
                         .hasAnyRole(
                                 "ADMIN",
@@ -76,9 +62,8 @@ public class SecurityConfig {
                         )
 
 
-                        // ==========================================
-                        // SUBJECTS
-                        // ==========================================
+                       
+                        // SUBJECT
 
                         // Read subjects
                         .requestMatchers(
@@ -121,11 +106,7 @@ public class SecurityConfig {
                                 "CONTENT_CREATOR"
                         )
 
-
-                        // ==========================================
                         // COURSES
-                        // ==========================================
-
                         // Read courses
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -167,10 +148,7 @@ public class SecurityConfig {
                                 "CONTENT_CREATOR"
                         )
 
-
-                        // ==========================================
                         // MODULES
-                        // ==========================================
 
                         // Read modules
                         .requestMatchers(
@@ -213,19 +191,14 @@ public class SecurityConfig {
                                 "CONTENT_CREATOR"
                         )
 
-
-                        // ==========================================
                         // ALL OTHER REQUESTS
-                        // ==========================================
-
                         // Everything else requires a valid JWT
                         .anyRequest()
                         .authenticated()
                 )
 
-                // ==========================================
                 // KEYCLOAK JWT AUTHENTICATION
-                // ==========================================
+                
 
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt ->
