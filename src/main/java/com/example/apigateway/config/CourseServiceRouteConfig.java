@@ -1,5 +1,6 @@
 package com.example.apigateway.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -22,11 +23,14 @@ import static org.springframework.web.servlet.function.RequestPredicates.path;
 public class CourseServiceRouteConfig {
 
     private final OAuth2AuthorizedClientManager authorizedClientManager;
+    private final String courseServiceUrl;
 
     public CourseServiceRouteConfig(
-            OAuth2AuthorizedClientManager authorizedClientManager) {
+            OAuth2AuthorizedClientManager authorizedClientManager,
+            @Value("${course.service.url}") String courseServiceUrl) {
 
         this.authorizedClientManager = authorizedClientManager;
+        this.courseServiceUrl = courseServiceUrl;
     }
 
     @Bean
@@ -101,7 +105,7 @@ public class CourseServiceRouteConfig {
 
         return route("course-service")
                 .route(coursePaths, http())
-                .before(uri("http://localhost:8082"))
+                .before(uri(courseServiceUrl))
                 .filter(serviceTokenFilter)
                 .build();
     }
