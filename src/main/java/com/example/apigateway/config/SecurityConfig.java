@@ -3,6 +3,11 @@ package com.example.apigateway.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -11,6 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @org.springframework.beans.factory.annotation.Value("${app.security.open-course-api:true}")
+    private boolean openCourseApi;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -26,12 +34,26 @@ public class SecurityConfig {
         http
                 // Disable CSRF because this is a stateless REST API
                 .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
 
                 .authorizeHttpRequests(auth -> auth
 
                         // PUBLIC ENDPOINTS
                         // Actuator endpoints
                         .requestMatchers("/actuator/**")
+                        .permitAll()
+
+                        // DEV ONLY: Public read access to course content APIs (subjects, courses, modules, resources)
+                        // These are disabled if app.security.open-course-api=false in application.properties
+                        .requestMatchers("/api/v1/subjects/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/courses/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/modules/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/backoffice/**")
+                        .permitAll()
+                        .requestMatchers("/api/resources/**")
                         .permitAll()
 
                         // User registration does not require login
@@ -209,5 +231,18 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

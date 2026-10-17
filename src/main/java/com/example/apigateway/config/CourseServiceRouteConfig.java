@@ -59,47 +59,34 @@ public class CourseServiceRouteConfig {
                                 authorizeRequest
                         );
 
-                if (authorizedClient == null ||
-                        authorizedClient.getAccessToken() == null) {
+                if (authorizedClient != null &&
+                        authorizedClient.getAccessToken() != null) {
 
-                    return ServerResponse
-                            .status(
-                                    HttpStatus.INTERNAL_SERVER_ERROR
-                            )
-                            .body(
-                                    "Unable to obtain service access token"
-                            );
+                    String serviceToken =
+                            authorizedClient
+                                    .getAccessToken()
+                                    .getTokenValue();
+
+                    ServerRequest modifiedRequest =
+                            ServerRequest
+                                    .from(request)
+                                    .headers(headers -> {
+                                        headers.remove(
+                                                HttpHeaders.AUTHORIZATION
+                                        );
+                                        headers.setBearerAuth(
+                                                serviceToken
+                                        );
+                                    })
+                                    .build();
+
+                    return next.handle(modifiedRequest);
                 }
 
-                String serviceToken =
-                        authorizedClient
-                                .getAccessToken()
-                                .getTokenValue();
-
-                ServerRequest modifiedRequest =
-                        ServerRequest
-                                .from(request)
-                                .headers(headers -> {
-                                    headers.remove(
-                                            HttpHeaders.AUTHORIZATION
-                                    );
-                                    headers.setBearerAuth(
-                                            serviceToken
-                                    );
-                                })
-                                .build();
-
-                return next.handle(modifiedRequest);
+                return next.handle(request);
 
             } catch (Exception exception) {
-
-                return ServerResponse
-                        .status(
-                                HttpStatus.INTERNAL_SERVER_ERROR
-                        )
-                        .body(
-                                "Service-to-service authentication failed"
-                        );
+                return next.handle(request);
             }
         };
 
