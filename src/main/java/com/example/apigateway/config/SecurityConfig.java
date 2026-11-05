@@ -55,11 +55,17 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/resources/**")
                         .permitAll()
+                        .requestMatchers("/api/v1/activities/**")
+                        .permitAll()
 
-                        // User registration does not require login
+                        // User registration, login, token refresh, and auth endpoints do not require prior authentication
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/users/register"
+                                "/api/users/register",
+                                "/api/users/login",
+                                "/api/users/keycloak-sync",
+                                "/api/users/refresh",
+                                "/api/auth/**"
                         )
                         .permitAll()
 
