@@ -36,194 +36,116 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
 
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
 
                         // PUBLIC ENDPOINTS
                         // Actuator endpoints
-                        .requestMatchers("/actuator/**")
-                        .permitAll()
+                        auth.requestMatchers("/actuator/**").permitAll();
 
-                        // DEV ONLY: Public read access to course content APIs (subjects, courses, modules, resources)
-                        // These are disabled if app.security.open-course-api=false in application.properties
-                        .requestMatchers("/api/v1/subjects/**")
-                        .permitAll()
-                        .requestMatchers("/api/v1/courses/**")
-                        .permitAll()
-                        .requestMatchers("/api/v1/modules/**")
-                        .permitAll()
-                        .requestMatchers("/api/v1/backoffice/**")
-                        .permitAll()
-                        .requestMatchers("/api/resources/**")
-                        .permitAll()
-                        .requestMatchers("/api/v1/activities/**")
-                        .permitAll()
-
-                        // User registration, login, token refresh, and auth endpoints do not require prior authentication
-                        .requestMatchers(
+                        // User & Backoffice registration, login, token refresh, and auth endpoints do not require prior authentication
+                        auth.requestMatchers(
                                 HttpMethod.POST,
                                 "/api/users/register",
                                 "/api/users/login",
                                 "/api/users/keycloak-sync",
                                 "/api/users/refresh",
-                                "/api/auth/**"
-                        )
-                        .permitAll()
+                                "/api/auth/**",
+                                "/api/v1/backoffice/auth/**",
+                                "/api/v1/backoffice/users/register"
+                        ).permitAll();
 
-                        //ADMIN
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        // DEV ONLY: Public access when app.security.open-course-api=true in application.properties
+                        if (openCourseApi) {
+                            auth.requestMatchers(
+                                    "/api/v1/subjects/**",
+                                    "/api/v1/courses/**",
+                                    "/api/v1/modules/**",
+                                    "/api/v1/backoffice/**",
+                                    "/api/resources/**",
+                                    "/api/v1/resources/**",
+                                    "/api/ai-resources/**",
+                                    "/api/v1/activities/**",
+                                    "/api/v1/enrollments/**",
+                                    "/api/v1/preferences/**",
+                                    "/api/v1/subscriptions/**"
+                            ).permitAll();
+                        }
 
-                        //CONTENT CREATOR
-                        .requestMatchers("/api/content/**")
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        // BACKOFFICE BFF (Admin & Content Creator)
+                        auth.requestMatchers("/api/v1/backoffice/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
+
+                        // ENROLLMENTS
+                        auth.requestMatchers("/api/v1/enrollments/**", "/api/v1/preferences/**", "/api/v1/subscriptions/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR", "STUDENT");
+
+                        // ADMIN
+                        auth.requestMatchers("/api/admin/**")
+                                .hasRole("ADMIN");
+
+                        // CONTENT CREATOR
+                        auth.requestMatchers("/api/content/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // STUDENT
-                
-                        .requestMatchers("/api/student/**")
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR",
-                                "STUDENT"
-                        )
+                        auth.requestMatchers("/api/student/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR", "STUDENT");
 
-
-                       
                         // SUBJECT
-
                         // Read subjects
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/v1/subjects/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR",
-                                "STUDENT"
-                        )
+                        auth.requestMatchers(HttpMethod.GET, "/api/v1/subjects/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR", "STUDENT");
 
                         // Create subjects
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/subjects/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.POST, "/api/v1/subjects/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Update subjects
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/v1/subjects/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.PUT, "/api/v1/subjects/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Delete subjects
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/v1/subjects/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.DELETE, "/api/v1/subjects/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // COURSES
                         // Read courses
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/v1/courses/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR",
-                                "STUDENT"
-                        )
+                        auth.requestMatchers(HttpMethod.GET, "/api/v1/courses/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR", "STUDENT");
 
                         // Create courses
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/courses/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.POST, "/api/v1/courses/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Update courses
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/v1/courses/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.PUT, "/api/v1/courses/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Delete courses
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/v1/courses/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.DELETE, "/api/v1/courses/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // MODULES
-
                         // Read modules
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/v1/modules/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR",
-                                "STUDENT"
-                        )
+                        auth.requestMatchers(HttpMethod.GET, "/api/v1/modules/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR", "STUDENT");
 
                         // Create modules
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/modules/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.POST, "/api/v1/modules/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Update modules
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/v1/modules/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.PUT, "/api/v1/modules/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // Delete modules
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/v1/modules/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "CONTENT_CREATOR"
-                        )
+                        auth.requestMatchers(HttpMethod.DELETE, "/api/v1/modules/**")
+                                .hasAnyRole("ADMIN", "CONTENT_CREATOR");
 
                         // ALL OTHER REQUESTS
                         // Everything else requires a valid JWT
-                        .anyRequest()
-                        .authenticated()
-                )
+                        auth.anyRequest().authenticated();
+                })
 
                 // KEYCLOAK JWT AUTHENTICATION
                 
